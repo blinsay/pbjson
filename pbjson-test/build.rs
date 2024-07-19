@@ -15,6 +15,7 @@ fn main() -> Result<()> {
         root.join("duplicate_name.proto"),
         root.join("duplicate_number.proto"),
         root.join("escape.proto"),
+        root.join("any.proto"),
     ];
 
     // Tell cargo to recompile if any of these proto files are changed

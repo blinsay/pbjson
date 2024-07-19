@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package test.any;
+
+import "google/protobuf/any.proto";
+
+message CoolMessage {
+  google.protobuf.Any inner = 1;
+}
+
+message CoolEmbeddedMessage {
+  string field_one = 1;
+  bool field_two = 2;
+}

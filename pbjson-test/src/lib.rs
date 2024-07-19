@@ -24,6 +24,10 @@ pub enum ExternEnumeration {
 }
 
 pub mod test {
+    pub mod any {
+        include!(concat!(env!("OUT_DIR"), "/test.any.rs"));
+        include!(concat!(env!("OUT_DIR"), "/test.any.serde.rs"));
+    }
     pub mod syntax3 {
         include!(concat!(env!("OUT_DIR"), "/test.syntax3.rs"));
         include!(concat!(env!("OUT_DIR"), "/test.syntax3.serde.rs"));
@@ -63,7 +67,7 @@ mod tests {
     use super::*;
     use crate::test::syntax3::kitchen_sink::MixedCase;
     use chrono::TimeZone;
-    use pbjson_types::{Duration, Timestamp};
+    use pbjson_types::{Any, Duration, Timestamp};
     use test::syntax3::*;
 
     /// A struct holding the expected json-encoded representation of a test step.
@@ -775,6 +779,40 @@ mod tests {
 
         let decoded = serde_json::from_str::<Target>(&encoded)?;
         assert_eq!(decoded, target);
+
+        Ok(())
+    }
+
+    /// Any should serialize with the regular representation of the embedded
+    /// message with an additional `@type` field.
+    #[test]
+    fn test_serialize_any() -> Result<(), Box<dyn Error>> {
+        use super::test::any;
+
+        let inner = {
+            let inner_msg = any::CoolEmbeddedMessage {
+                field_one: "hello field".to_string(),
+                field_two: true,
+            };
+            let mut inner = vec![];
+            prost::Message::encode(&inner_msg, &mut inner)?;
+
+            Some(Any {
+                type_url: "any.CoolEmbeddedMessage".to_string(),
+                value: inner.into(),
+            })
+        };
+
+        let msg = any::CoolMessage { inner };
+
+        assert_eq!(
+            serde_json::json!({
+                "@type": "any.CoolEmbeddedMessage",
+                "field_one": "hello field",
+                "field_two": true,
+            }),
+            serde_json::to_value(&msg)?
+        );
 
         Ok(())
     }
